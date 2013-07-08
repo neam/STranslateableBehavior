@@ -18,7 +18,6 @@ Setup
 
 Ensure that you have the following in your composer.json:
 
-    <pre>
     "repositories":[
         {
             "type": "vcs",
@@ -30,7 +29,6 @@ Ensure that you have the following in your composer.json:
         "neam/yii-i18n-columns":"@dev",
         ...
     },
-    </pre>
 
 Then install through composer:
 
@@ -203,4 +201,4 @@ Several advantages, such as:
 
 ### 6. Why not?
 
-Why not?
+Why not? :)
