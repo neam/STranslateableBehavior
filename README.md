@@ -136,7 +136,8 @@ All translations will be available through attribute suffix, ie `$book->title_en
 
 ## Fetching translations
 
-     $book = Page::model()->findPk(1);
+     $book = Book::model()->findByPk(1);
+     Yii::app()->language = 'en';
      echo $book->title; // Outputs 'The Alchemist'
      Yii::app()->language = 'sv';
      echo $book->title; // Outputs 'Alkemisten'
@@ -154,6 +155,10 @@ All translations will be available through attribute suffix, ie `$book->title_en
      $book->title_sv = 'Djävulen bär Prada';
      $book->save(); // Saves both translations
 
+## More examples
+
+...can be found in tests/unit/I18nColumnsTest.php
+
 # Changelog
 
 ### 0.1.0
@@ -164,10 +169,18 @@ All translations will be available through attribute suffix, ie `$book->title_en
 - Composer support
 - Improved instructions directly in README
 - Updated to work with Yii 1.1.13
+- Unit tests
 
 ### 0.0.0
 
 - Forked https://github.com/firstrow/STranslateableBehavior
+
+# Credits
+
+- [@firstrow](https://github.com/firstrow) for creating STranslateableBehavior which introduced the concept of column-based i18n for Yii
+- [@mikehaertl](https://github.com/mikehaertl) for [the getter/setter logic](https://github.com/mikehaertl/translatable/blob/master/Translatable.php#L60)
+- [@schmunk42](https://github.com/schmunk42) and [@tonydspaniard](https://github.com/tonydspaniard) for support
+- [@clevertech](https://github.com/clevertech) for initial tests directory structure
 
 FAQ
 ======
@@ -202,3 +215,35 @@ Several advantages, such as:
 ### 6. Why not?
 
 Why not? :)
+
+Running tests
+==========
+
+    cd vendor/neam/yii-i18n-columns
+    php path/to/composer.phar install --dev
+    cd tests
+    ../vendor/bin/phpunit --verbose --debug
+
+This should result in an output similar to:
+
+	PHPUnit 3.7.22 by Sebastian Bergmann.
+
+	Configuration read from /path/to/app/vendor/neam/yii-i18n-columns/tests/phpunit.xml
+
+
+	Starting test 'I18nColumnsTest::ensureEmptyDb'.
+	.
+	Starting test 'I18nColumnsTest::getWithoutSuffix'.
+	.
+	Starting test 'I18nColumnsTest::setWithoutSuffix'.
+	.
+	Starting test 'I18nColumnsTest::saveSingleWithoutSuffix'.
+	.
+	Starting test 'I18nColumnsTest::fetchSingleWithoutSuffix'.
+	.
+	Starting test 'I18nColumnsTest::saveMultiple'.
+	.
+
+	Time: 0 seconds, Memory: 10.00Mb
+
+	OK (6 tests, 28 assertions)

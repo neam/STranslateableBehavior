@@ -27,7 +27,7 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
 		if (array_key_exists($translated, $this->owner->attributes))
 			return $this->owner->$translated;
 
-		return parent::__get($name);
+		throw new Exception("Attribute '$translated' does not exist in model " . get_class($this->owner));
 	}
 
 	/**
@@ -41,6 +41,8 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
 		$translated = $name . '_' . Yii::app()->language;
 		if (array_key_exists($translated, $this->owner->attributes))
 			$this->owner->$translated = $value;
+		else
+			throw new Exception("Attribute '$translated' does not exist in model " . get_class($this->owner));
 	}
 
 	/**
