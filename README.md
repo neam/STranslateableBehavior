@@ -57,19 +57,16 @@ Clone this project into /path/to/your/app/vendor/neam/yii-i18n-columns
         return array(
             'i18n-columns' => array(
                  'class' => 'I18nColumnsBehavior',
+                 'translationAttributes' => array(
+                      'title',
+                      'slug',
+                      'etc',
+                 ),
             ),
         );
     }
 
-### 2. Add the i18nColumns method and define attributes to translate:
-
-    public function i18nColumns()
-    {
-        // List of model attributes to translate
-        return array('content', 'slug'); //Example
-    }
-
-### 3. Create migration from command line:
+### 2. Create migration from command line:
 
 `./yiic i18n-columns`
 
@@ -77,9 +74,37 @@ Prior to this, you should already have configured a default language (`$config['
 
 Run with `--verbose` to see more details.
 
-### 4. Apply the generated migration:
+### 3. Apply the generated migration:
 
 `./yiic migrate`
+
+This will rename the fields that are defined in translationAttributes to fieldname_defaultlanguagecode and add columns for the remaining languages.
+
+Sample migration file:
+
+	<?php
+	class m130708_165204_i18n extends CDbMigration
+	{
+	    public function up()
+	    {
+		$this->renameColumn('section', 'title', 'title_en');
+		$this->renameColumn('section', 'slug', 'slug_en');
+		$this->addColumn('section', 'title_sv', 'varchar(255) null');
+		$this->addColumn('section', 'slug_sv', 'varchar(255) null');
+		$this->addColumn('section', 'title_de', 'varchar(255) null');
+		$this->addColumn('section', 'slug_de', 'varchar(255) null');
+	    }
+
+	    public function down()
+	    {
+	      $this->renameColumn('section', 'title_en', 'title');
+	      $this->renameColumn('section', 'slug_en', 'slug');
+	      $this->dropColumn('section', 'title_sv');
+	      $this->dropColumn('section', 'slug_sv');
+	      $this->dropColumn('section', 'title_de');
+	      $this->dropColumn('section', 'slug_de');
+	    }
+	}
 
 ### 5. Re-generate models
 
@@ -96,9 +121,20 @@ All translations will be available through attribute suffix, ie `$book->title_en
      $book = Page::model()->findPk(1);
      echo $book->title; // Outputs 'The Alchemist'
      Yii::app()->language = 'sv';
-     $book = Page::model()->findPk(1);
      echo $book->title; // Outputs 'Alkemisten'
      echo $book->title_en; // Outputs 'The Alchemist'
+
+## Saving a single translation
+
+     Yii::app()->language = 'sv';
+     $book->title = 'Djävulen bär Prada';
+     $book->save(); // Saves 'Djävulen bär Prada' to Book.title_sv
+
+## Saving multiple translations
+
+     $book->title_en = 'The Devil Wears Prada';
+     $book->title_sv = 'Djävulen bär Prada';
+     $book->save(); // Saves both translations
 
 # Changelog
 

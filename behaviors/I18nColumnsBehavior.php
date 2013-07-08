@@ -11,20 +11,52 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
 {
 
 	/**
-	 * Set non-prefixed multilingual attributes to the current language
-	 * 
-	 * @access public
+	 * @var array list of attributes to translate
 	 */
-	public function afterFind($event)
+	public $translationAttributes = array();
+
+	/**
+	 * Make translated attributes readable without requiring suffix
+	 */
+	public function __get($name)
 	{
-		$columns = $this->owner->i18nColumns();
-		if (sizeof($columns) > 0) {
-			foreach ($columns as $attr) {
-				$attrName = $attr . '_' . Yii::app()->language;
-				if (array_key_exists($attrName, $this->owner->attributes))
-					$this->owner->$attr = $this->owner->$attrName;
-			}
-		}
+		if (!in_array($name, $this->translationAttributes))
+			return parent::__get($name);
+
+		$translated = $name . '_' . Yii::app()->language;
+		if (array_key_exists($translated, $this->owner->attributes))
+			return $this->owner->$translated;
+
+		return parent::__get($name);
+	}
+
+	/**
+	 * Make translated attributes writeable without requiring suffix
+	 */
+	public function __set($name, $value)
+	{
+		if (!in_array($name, $this->translationAttributes))
+			return parent::__set($name, $value);
+
+		$translated = $name . '_' . Yii::app()->language;
+		if (array_key_exists($translated, $this->owner->attributes))
+			$this->owner->$translated = $value;
+	}
+
+	/**
+	 * Expose translatable attributes as readable
+	 */
+	public function canGetProperty($name)
+	{
+		return in_array($name, $this->translationAttributes) ? true : parent::canGetProperty($name);
+	}
+
+	/**
+	 * Expose translatable attributes as writeable
+	 */
+	public function canSetProperty($name)
+	{
+		return in_array($name, $this->translationAttributes) ? true : parent::canSetProperty($name);
 	}
 
 }

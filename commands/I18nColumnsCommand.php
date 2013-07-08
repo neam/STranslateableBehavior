@@ -61,7 +61,7 @@ class I18nColumnsCommand extends CConsoleCommand
 	public function d($string)
 	{
 		if ($this->_verbose) {
-			print "\033[37m".$string."\033[30m";
+			print "\033[37m" . $string . "\033[30m";
 		}
 	}
 
@@ -99,7 +99,7 @@ class I18nColumnsCommand extends CConsoleCommand
 		foreach ($this->models as $modelName => $modelClass) {
 			$this->d("\t...$modelName: ");
 			foreach ($this->languages as $lang) {
-				$this->d($lang.",");
+				$this->d($lang . ",");
 				$this->_processLang($lang, $modelClass);
 			}
 			$this->d("\n");
@@ -114,7 +114,8 @@ class I18nColumnsCommand extends CConsoleCommand
 	 */
 	private function _processLang($lang, $model)
 	{
-		foreach ($model->i18nColumns() as $attribute) {
+		$behaviors = $model->behaviors();
+		foreach ($behaviors['i18n-columns']['translationAttributes'] as $attribute) {
 			$newName = $attribute . '_' . $lang;
 			if (!isset($model->metaData->columns[$newName]) && $this->_checkColumnExists($model, $attribute)) {
 				// Rename columns back and forth
@@ -164,7 +165,7 @@ class I18nColumnsCommand extends CConsoleCommand
 	private function _loadLanguages()
 	{
 		// Load main.php config file
-		$file = realpath(Yii::app()->basePath). '/config/main.php';
+		$file = realpath(Yii::app()->basePath) . '/config/main.php';
 		if (!file_exists($file)) {
 			print("Config not found\n");
 			exit("Error loading config file $file.\n");
@@ -248,12 +249,10 @@ class ' . $migrationName . ' extends CDbMigration
 					try
 					{
 						$model = @new $fileClassName;
-						if (method_exists($model, 'i18nColumns')) {
-							if (method_exists($model, 'behaviors')) {
-								$behaviors = $model->behaviors();
-								if (isset($behaviors['i18n-columns']) && strpos($behaviors['i18n-columns']['class'], 'I18nColumnsBehavior') !== false) {
-									$models[$classname] = $model;
-								}
+						if (method_exists($model, 'behaviors')) {
+							$behaviors = $model->behaviors();
+							if (isset($behaviors['i18n-columns']) && strpos($behaviors['i18n-columns']['class'], 'I18nColumnsBehavior') !== false) {
+								$models[$classname] = $model;
 							}
 						}
 					} catch (ErrorException $e)
