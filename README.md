@@ -143,6 +143,7 @@ All translations will be available through attribute suffix, ie `$book->title_en
 - Renamed to I18nColumns (to clarify the underlying concept)
 - More accurate model detection (not searching model source files for a hard-coded string...)
 - Cleaned up (does not contain a complete Yii application, only the necessary extension files)
+- Composer support
 - Improved instructions directly in README
 - Updated to work with Yii 1.1.13
 
