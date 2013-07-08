@@ -224,12 +224,12 @@ class ' . $migrationName . ' extends CDbMigration
     }
 }' . "\n";
 
-        $migrationsDir = dirname(dirname(__FILE__)) . '/migrations';
+        $migrationsDir = realpath(Yii::app()->basePath.'/migrations');
         if (!realpath($migrationsDir)) {
             die(sprintf('Please create migration directory %s first', $migrationsDir));
         }
 
-        $migrationFile = realpath(dirname(__FILE__) . '/../migrations') . '/' . $migrationName . '.php';
+        $migrationFile = $migrationsDir . '/' . $migrationName . '.php';
         $f = fopen($migrationFile, 'w') or die("Can't open file");
         fwrite($f, $phpCode);
         fclose($f);
