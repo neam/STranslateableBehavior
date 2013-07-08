@@ -1,10 +1,15 @@
 <?php
 
 /**
- * TranslateCommand
- * Searches models that using TranslateBehavior and creates new migrations
+ * I18nColumnsCommand
+ * 
+ * Finds models that are using I18nColumnsBehavior and creates relevant migrations
+ *
+ * @uses CConsoleCommand
+ * @license MIT
+ * @author See https://github.com/neam/yii-i18n-columns/graphs/contributors
  */
-class TranslateCommand extends CConsoleCommand
+class I18nColumnsCommand extends CConsoleCommand
 {
 
 	/**
@@ -13,16 +18,16 @@ class TranslateCommand extends CConsoleCommand
 	public $models = array();
 
 	/**
-	 * @var null
+	 * @var array
 	 */
-	public $langs = null;
+	public $languages = array();
 
 	/**
 	 * Source language
 	 *
 	 * @var string
 	 */
-	public $sourceLang;
+	public $sourceLanguage;
 
 	/**
 	 * @var array
@@ -56,7 +61,7 @@ class TranslateCommand extends CConsoleCommand
 	public function d($string)
 	{
 		if ($this->_verbose) {
-			print $string;
+			print "\033[37m".$string."\033[30m";
 		}
 	}
 
@@ -71,7 +76,9 @@ class TranslateCommand extends CConsoleCommand
 		if (in_array('--verbose', $args)) {
 			$this->_verbose = true;
 		}
-		$this->d("\033[37mLoading languages\n");
+
+		// 
+		$this->d("Loading languages\n");
 		$this->_loadLanguages();
 
 		$this->models = $this->_getModels();
@@ -79,7 +86,7 @@ class TranslateCommand extends CConsoleCommand
 		if (sizeof($this->models) > 0) {
 			$this->_createMigration();
 		} else {
-			echo "Found no models with a translate() method";
+			echo "Found no models with a i18nColumns() method";
 		}
 	}
 
@@ -91,8 +98,8 @@ class TranslateCommand extends CConsoleCommand
 		$this->d("Creating the migration...\n");
 		foreach ($this->models as $modelName => $modelClass) {
 			$this->d("\t...$modelName: ");
-			foreach ($this->langs as $lang) {
-				$this->d($lang);
+			foreach ($this->languages as $lang) {
+				$this->d($lang.",");
 				$this->_processLang($lang, $modelClass);
 			}
 			$this->d("\n");
@@ -107,12 +114,11 @@ class TranslateCommand extends CConsoleCommand
 	 */
 	private function _processLang($lang, $model)
 	{
-		foreach ($model->translate() as $attribute) {
+		foreach ($model->i18nColumns() as $attribute) {
 			$newName = $attribute . '_' . $lang;
 			if (!isset($model->metaData->columns[$newName]) && $this->_checkColumnExists($model, $attribute)) {
 				// Rename columns back and forth
-				if ($lang == $this->sourceLang) {
-					$this->d("Rename $attribute to $newName\n");
+				if ($lang == $this->sourceLanguage) {
 					$this->up[] = '$this->renameColumn(\'' . $model->tableName() . '\', \'' . $attribute
 						. '\', \'' . $newName . '\');';
 					$this->down[] = '$this->renameColumn(\'' . $model->tableName() . '\', \''
@@ -151,25 +157,6 @@ class TranslateCommand extends CConsoleCommand
 	}
 
 	/**
-	 * Load model file and create new instance
-	 *
-	 * @param mixed $path Path to model
-	 * @access protected
-	 */
-	private function _loadModelFile($path)
-	{
-		$this->d("Loading model from $path\n");
-		$className = str_replace('.php', '', basename($path));
-		if (!class_exists($className, false)) {
-			include($path);
-			$model = new $className();
-			if (method_exists($model, 'translate')) {
-				$this->models[$className] = $model;
-			}
-		}
-	}
-
-	/**
 	 * Load languages from main config.
 	 *
 	 * @access protected
@@ -177,25 +164,25 @@ class TranslateCommand extends CConsoleCommand
 	private function _loadLanguages()
 	{
 		// Load main.php config file
-		$file = realpath(dirname(__FILE__) . '/../config/main.php');
+		$file = realpath(Yii::app()->basePath). '/config/main.php';
 		if (!file_exists($file)) {
 			print("Config not found\n");
-			exit("Error loading config file main.php.\n");
+			exit("Error loading config file $file.\n");
 		} else {
 			$config = require($file);
 			$this->d("Config loaded\n");
 		}
 
-		if (!isset($config['params']['languages'])) {
-			exit("Please, define possible languages in config file.\n");
+		if (!isset($config['components']['langHandler']['languages'])) {
+			exit("Your Yii application has no configured languages.\n");
 		}
 
-		if (!isset($config['sourceLanguage'])) {
-			exit("Please, define the source language in config file.\n");
+		if (!isset($config['language'])) {
+			exit("Please, define a default language in the config file.\n");
 		}
 
-		$this->langs = $config['params']['languages'];
-		$this->sourceLang = $config['sourceLanguage'];
+		$this->languages = $config['components']['langHandler']['languages'];
+		$this->sourceLanguage = $config['language'];
 	}
 
 	/**
@@ -207,7 +194,7 @@ class TranslateCommand extends CConsoleCommand
 			exit("Database up to date\n");
 		}
 
-		$migrationName = 'm' . gmdate('ymd_His') . '_translate';
+		$migrationName = 'm' . gmdate('ymd_His') . '_i18n';
 
 		$phpCode = '<?php
 class ' . $migrationName . ' extends CDbMigration
@@ -261,10 +248,10 @@ class ' . $migrationName . ' extends CDbMigration
 					try
 					{
 						$model = @new $fileClassName;
-						if (method_exists($model, 'translate')) {
+						if (method_exists($model, 'i18nColumns')) {
 							if (method_exists($model, 'behaviors')) {
 								$behaviors = $model->behaviors();
-								if (isset($behaviors['translate']) && strpos($behaviors['translate']['class'], 'STranslateableBehavior') !== false) {
+								if (isset($behaviors['i18n-columns']) && strpos($behaviors['i18n-columns']['class'], 'I18nColumnsBehavior') !== false) {
 									$models[$classname] = $model;
 								}
 							}

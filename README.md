@@ -1,3 +1,149 @@
-STranslateableBehavior is Yii behavior that eases the translation of project.
-It automatically creates migrations and stores model content in same table with language suffix.
-See https://github.com/firstrow/STranslateableBehavior/wiki for more details. 
+Yii Extension: I18nColumns
+============
+
+Transparent attribute translation for ActiveRecords, without requiring lookup tables for translated field contents.
+
+Features
+======
+
+ * Eases the creation of multilingual ActiveRecords in a project
+ * Automatically loads the application language by default
+ * Translations are stored directly in the model using separate columns for each language
+ * Console command automatically creates migrations for the necessary database changes
+
+Setup
+=============
+
+## Download
+
+Clone this project into /path/to/your/app/vendor/neam/yii-i18n-columns
+
+## Configure
+
+#### Add Alias to both main.php and console.php
+    'aliases' => array(
+        ...
+        'vendor'  => dirname(__FILE__) . '/../../vendor',
+        'i18n-columns' => 'vendor.neam.yii-i18n-columns',
+        ...
+    ),
+
+## Import the behavior in main.php
+
+    'import' => array(
+        ...
+        'i18n-columns.behaviors.I18nColumnsBehavior',
+        ...
+    ),
+
+
+## Reference the translate command in console.php
+
+    'commandMap' => array(
+        ...
+        'i18n-columns'    => array(
+            'class' => 'i18n-columns.commands.I18nColumnsCommand',
+        ),
+        ...
+    ),
+
+
+## Configure models to be multilingual
+
+### 1. Add the behavior to the models that you want multilingual
+
+    public function behaviors()
+    {
+        return array(
+            'i18n-columns' => array(
+                 'class' => 'I18nColumnsBehavior',
+            ),
+        );
+    }
+
+### 2. Add the i18nColumns method and define attributes to translate:
+
+    public function i18nColumns()
+    {
+        // List of model attributes to translate
+        return array('content', 'slug'); //Example
+    }
+
+### 3. Create migration from command line:
+
+`./yiic i18n-columns`
+
+Prior to this, you should already have configured a default language (`$config['language']`) and available languages (`$config['components']['langHandler']['languages']`) for your app.
+
+Run with `--verbose` to see more details.
+
+### 4. Apply the generated migration:
+
+`./yiic migrate`
+
+### 5. Re-generate models
+
+Use Gii as per the official documentation. After this, you have multilingual Active Records at your disposal :)
+
+#Usage
+
+Example usage with a Book model that has a multilingual *title* attribute.
+
+All translations will be available through attribute suffix, ie `$book->title_en` for the english translation, `$book->title_sv` for the swedish translation. `$book->title` will be an alias for the currently selected language's translation.
+
+## Fetching translations
+
+     $book = Page::model()->findPk(1);
+     echo $book->title; // Outputs 'The Alchemist'
+     Yii::app()->language = 'sv';
+     $book = Page::model()->findPk(1);
+     echo $book->title; // Outputs 'Alkemisten'
+     echo $book->title_en; // Outputs 'The Alchemist'
+
+# Changelog
+
+### 0.1.0
+
+- Renamed to I18nColumns (to clarify the underlying concept)
+- More accurate model detection (not searching model source files for a hard-coded string...)
+- Cleaned up (does not contain a complete Yii application, only the necessary extension files)
+- Improved instructions directly in README
+- Updated to work with Yii 1.1.13
+
+### 0.0.0
+
+- Forked https://github.com/firstrow/STranslateableBehavior
+
+FAQ
+======
+
+## Why use suffixed columns instead of one or many lookup tables?
+
+### 1. Clarity
+
+Your multilingual models will keep working as ordinary models, albeit with more fields than before. Your EER diagrams will only be cluttered with extra fields, not new translation tables and relations.
+
+### 2. Simple usage
+
+There is no need to create advanced join-helpers to access the translated attributes, they are simply attributes in the table to begin with. Thus, creating SQL to interact with translations is very straightforward:
+
+`SELECT id, title_en AS title FROM book WHERE title = 'The Alchemist';`
+
+### 3. Easy translation to all languages
+
+After you have generated your CRUD for the multilingual model, you immediately have a translation interface for all languages. You can translate them side by side and easily spot missing translations.
+
+### 4. Translation of related records while maintaining foreign keys
+
+Do you have a image_id foreign key that should be point to a different image record for each language? Good news, you can still define your relations / foreign keys and keep database integrity checks intact (much harder when using lookup tables)
+
+### 5. Decreased complexity = Flexibility
+
+Several advantages, such as:
+
+- Create SQL commands for all translations without requiring n joins where n is the amount of languages configured
+- Easily add whole tables to Lucene indexes and be certain that all translated content is indexed
+
+### 6. Why not?
+
+Why not?
