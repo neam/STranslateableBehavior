@@ -14,9 +14,29 @@ Features
 Setup
 =============
 
-## Download
+## Installation
 
-Clone this project into /path/to/your/app/vendor/neam/yii-i18n-columns
+Ensure that you have the following in your composer.json:
+
+    <pre>
+    "repositories":[
+        {
+            "type": "vcs",
+            "url": "https://github.com/neam/yii-i18n-columns"
+        },
+        ...
+    ],
+    "require":{
+        "neam/yii-i18n-columns":"@dev",
+        ...
+    },
+    </pre>
+
+Then install through composer:
+
+    php composer.php install neam/yii-i18n-columns
+
+If you don't use composer, clone or download this project into /path/to/your/app/vendor/neam/yii-i18n-columns
 
 ## Configure
 
