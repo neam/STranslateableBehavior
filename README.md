@@ -1,20 +1,27 @@
 Yii Extension: I18nColumns
-============
+==========================
 
 Transparent attribute translation for ActiveRecords, without requiring lookup tables for translated field contents.
 
 Features
-======
+--------
 
  * Eases the creation of multilingual ActiveRecords in a project
  * Automatically loads the application language by default
  * Translations are stored directly in the model using separate columns for each language
  * Console command automatically creates migrations for the necessary database changes
 
-Setup
-=============
+Requirements
+------------------
 
-## Installation
+ * Yii 1.1 or above
+ * Use of Yii console
+ * Use of Gii (preferably [Gtc](https://github.com/schmunk42/gii-template-collection/))
+
+Setup
+-----
+
+### Download and install
 
 Ensure that you have the following in your composer.json:
 
@@ -36,9 +43,7 @@ Then install through composer:
 
 If you don't use composer, clone or download this project into /path/to/your/app/vendor/neam/yii-i18n-columns
 
-## Configure
-
-#### Add Alias to both main.php and console.php
+### Add Alias to both main.php and console.php
     'aliases' => array(
         ...
         'vendor'  => dirname(__FILE__) . '/../../vendor',
@@ -46,7 +51,7 @@ If you don't use composer, clone or download this project into /path/to/your/app
         ...
     ),
 
-## Import the behavior in main.php
+### Import the behavior in main.php
 
     'import' => array(
         ...
@@ -55,7 +60,7 @@ If you don't use composer, clone or download this project into /path/to/your/app
     ),
 
 
-## Reference the translate command in console.php
+### Reference the translate command in console.php
 
     'commandMap' => array(
         ...
@@ -66,9 +71,9 @@ If you don't use composer, clone or download this project into /path/to/your/app
     ),
 
 
-## Configure models to be multilingual
+### Configure models to be multilingual
 
-### 1. Add the behavior to the models that you want multilingual
+#### 1. Add the behavior to the models that you want multilingual
 
     public function behaviors()
     {
@@ -84,7 +89,7 @@ If you don't use composer, clone or download this project into /path/to/your/app
         );
     }
 
-### 2. Create migration from command line:
+#### 2. Create migration from command line:
 
 `./yiic i18n-columns`
 
@@ -92,7 +97,7 @@ Prior to this, you should already have configured a default language (`$config['
 
 Run with `--verbose` to see more details.
 
-### 3. Apply the generated migration:
+#### 3. Apply the generated migration:
 
 `./yiic migrate`
 
@@ -124,17 +129,18 @@ Sample migration file:
 	    }
 	}
 
-### 5. Re-generate models
+#### 4. Re-generate models
 
 Use Gii as per the official documentation. After this, you have multilingual Active Records at your disposal :)
 
-#Usage
+Usage
+-----
 
 Example usage with a Book model that has a multilingual *title* attribute.
 
 All translations will be available through attribute suffix, ie `$book->title_en` for the english translation, `$book->title_sv` for the swedish translation. `$book->title` will be an alias for the currently selected language's translation.
 
-## Fetching translations
+### Fetching translations
 
      $book = Book::model()->findByPk(1);
      Yii::app()->language = 'en';
@@ -143,23 +149,24 @@ All translations will be available through attribute suffix, ie `$book->title_en
      echo $book->title; // Outputs 'Alkemisten'
      echo $book->title_en; // Outputs 'The Alchemist'
 
-## Saving a single translation
+### Saving a single translation
 
      Yii::app()->language = 'sv';
      $book->title = 'Djävulen bär Prada';
      $book->save(); // Saves 'Djävulen bär Prada' to Book.title_sv
 
-## Saving multiple translations
+### Saving multiple translations
 
      $book->title_en = 'The Devil Wears Prada';
      $book->title_sv = 'Djävulen bär Prada';
      $book->save(); // Saves both translations
 
-## More examples
+### More examples
 
 ...can be found in tests/unit/I18nColumnsTest.php
 
-# Changelog
+Changelog
+---------
 
 ### 0.1.0
 
@@ -173,21 +180,22 @@ All translations will be available through attribute suffix, ie `$book->title_en
 
 ### 0.0.0
 
-- Forked https://github.com/firstrow/STranslateableBehavior
+- Forked [https://github.com/firstrow/STranslateableBehavior](https://github.com/firstrow/STranslateableBehavior)
 
-# Credits
+Credits
+-------
 
 - [@firstrow](https://github.com/firstrow) for creating STranslateableBehavior which introduced the concept of column-based i18n for Yii
 - [@mikehaertl](https://github.com/mikehaertl) for [the getter/setter logic](https://github.com/mikehaertl/translatable/blob/master/Translatable.php#L60)
-- [@schmunk42](https://github.com/schmunk42) and [@tonydspaniard](https://github.com/tonydspaniard) for support
+- [@schmunk42](https://github.com/schmunk42), [@tonydspaniard](https://github.com/tonydspaniard) and [@Crisu83](https://github.com/Crisu83) for advice and healthy critique
 - [@clevertech](https://github.com/clevertech) for initial tests directory structure
 
 FAQ
-======
+---
 
-## Why use suffixed columns instead of one or many lookup tables?
+### Why use suffixed columns instead of one or many lookup tables?
 
-### 1. Compatibility with Gii and other Yii extensions
+#### 1. Compatibility with Gii and other Yii extensions
 
 Your multilingual models will keep working as ordinary models, albeit with more fields than before. You can generate new CRUD and instantly have a translation interface for all your languages.
 
@@ -195,7 +203,7 @@ This means that **you will quickly be able to add multilingual content earlier i
 
 Having a simple multilingual datamodel most likely means better compatibility with other extensions offering magic tooling, such as saving many-many relations, providing search/filtering features, form-generators, editable grid views, etc. It is our experience that these extensions need more custom fitting the higher the amount of joins necessary to show relevant information.
 
-### 2. You are no longer dependent on magic tooling (such as ActiveRecord)
+#### 2. You are no longer dependent on magic tooling (such as ActiveRecord)
 
 There is no need to create advanced join-helpers to access the translated attributes, they are simply attributes in the table to begin with. Thus, creating SQL to interact with translations is very straightforward:
 
@@ -203,7 +211,7 @@ There is no need to create advanced join-helpers to access the translated attrib
 
 This may not be a notable difference when you prototype your application, but becomes more important when you move away from ActiveRecord and write queries using QueryBuilder, pure SQL, or in a barebone PHP/C layer/app side by side with your Yii application (for performance reasons).
 
-### 3. Matter of taste scalability-wise
+#### 3. Matter of taste scalability-wise
 
 Let's pone that we have 40 languages and 300.000 *book* records with 8 translatable fields each, as well as 2 million *chapter* records, with 4 translatable fields each.
 
@@ -227,13 +235,13 @@ Let's pone that we have 40 languages and 300.000 *book* records with 8 translata
     Table chapter with 4 columns and 2 million records
     Table translation with 3 columns and 416 million records
 
-### 4. Decreased complexity = Flexibility
+#### 4. Decreased complexity = Flexibility
 
 Say you have a query that without translated fields requires 7 joins, a group by clause and 1-2 subqueries. Then add the necessity to add one more join for each translated field and still achieve a high-performant query. It certainly is possible, but with the cost of added complexity.
 
 In essence, the concept of having suffixed columns instead of translation table(s) is similar to the concept of code generation. You add extra complexity to generate the code/datamodel and receive the benefit of a code base that is easier to maintain and customize.
 
-### 5. Why not?
+#### 5. Why not?
 
 Despite #1-4 above, this approach does not fit the bill for most projects. It can be seen as anti-quick and too simplistic to be a truly robust solution.
 
@@ -250,10 +258,10 @@ In general, it will not fit larger projects that are aimed at high-performing st
 
 Then again, this extension is written to be as similar as possible to [mike's translatable behavior](https://github.com/mikehaertl/translatable) in usage and configuration, making it easy to later migrate to a translation-table-based approach after initial prototyping.
 
-What other reasons do you have to not use this horizontal approach to multilingual tables? We'd love to hear your views, open an issue and tell us! :)
+What other reasons do you have to not use this horizontal approach to multilingual tables? We'd love to hear your views, [open an issue](https://github.com/neam/yii-i18n-columns/issues) and tell us! :)
 
 Running tests
-==========
+-------------
 
     cd vendor/neam/yii-i18n-columns
     php path/to/composer.phar install --dev
