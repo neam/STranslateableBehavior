@@ -187,17 +187,21 @@ FAQ
 
 ## Why use suffixed columns instead of one or many lookup tables?
 
-### 1. You are no longer dependent on magic tooling (such as ActiveRecord)
+### 1. Compatibility with Gii and other Yii extensions
+
+Your multilingual models will keep working as ordinary models, albeit with more fields than before. You can generate new CRUD and instantly have a translation interface for all your languages.
+
+This means that **you will quickly be able to add multilingual content earlier in the development cycle**.
+
+Having a simple multilingual datamodel most likely means better compatibility with other extensions offering magic tooling, such as saving many-many relations, providing search/filtering features, form-generators, editable grid views, etc. It is our experience that these extensions need more custom fitting the higher the amount of joins necessary to show relevant information.
+
+### 2. You are no longer dependent on magic tooling (such as ActiveRecord)
 
 There is no need to create advanced join-helpers to access the translated attributes, they are simply attributes in the table to begin with. Thus, creating SQL to interact with translations is very straightforward:
 
 `SELECT id, title_en AS title FROM book WHERE title_en = 'The Alchemist';`
 
 This may not be a notable difference when you prototype your application, but becomes more important when you move away from ActiveRecord and write queries using QueryBuilder, pure SQL, or in a barebone PHP/C layer/app side by side with your Yii application (for performance reasons).
-
-### 2. Compatibility with Gii
-
-Your multilingual models will keep working as ordinary models, albeit with more fields than before. You can generate new CRUD and instantly have a translation interface for all your languages.
 
 ### 3. Matter of taste scalability-wise
 
@@ -231,7 +235,22 @@ In essence, the concept of having suffixed columns instead of translation table(
 
 ### 5. Why not?
 
-Yeah, why not? We'd love to hear your views, open an issue and start debating! :)
+Despite #1-4 above, this approach does not fit the bill for most projects. It can be seen as anti-quick and too simplistic to be a truly robust solution.
+
+For instance, if you actually have as many translations as noted in #3 above, you'd probably be better of with a single translation table stored in a key-value-based NoSQL solution. Then, however, you will no longer be able to join the translated data into SQL-queries directly (for whatever that's worth), and handling translations is probably best done using crowd-sourced platforms than Yii-powered backends.
+
+Also, when the system should be developer independent once shipped, adding languages on-the-fly would need either to be done by adding "all" languages to the datamodel from the beginning (and then merely activating more languages as you go along), or automated with a script similar to (to add the extra columns to the models):
+
+    #!/bin/bash
+    ./yiic i18n-columns
+    ./yiic migrate
+    curl https://.…gii-generate-base-models
+
+In general, it will not fit larger projects that are aimed at high-performing stable frontends, but will be more suitable when the main priority is to quickly build feature-complete backends for multilingual content, for which the data model changes often. Migrations and CRUD generation is a part of the daily workflow while developing such solutions, and simplicity and easy customization of the generated code often more important than developer independence.
+
+Then again, this extension is written to be as similar as possible to [mike's translatable behavior](https://github.com/mikehaertl/translatable) in usage and configuration, making it easy to later migrate to a translation-table-based approach after initial prototyping.
+
+What other reasons do you have to not use this horizontal approach to multilingual tables? We'd love to hear your views, open an issue and tell us! :)
 
 Running tests
 ==========
