@@ -187,34 +187,51 @@ FAQ
 
 ## Why use suffixed columns instead of one or many lookup tables?
 
-### 1. Clarity
-
-Your multilingual models will keep working as ordinary models, albeit with more fields than before. Your EER diagrams will only be cluttered with extra fields, not new translation tables and relations.
-
-### 2. Simple usage
+### 1. You are no longer dependent on magic tooling (such as ActiveRecord)
 
 There is no need to create advanced join-helpers to access the translated attributes, they are simply attributes in the table to begin with. Thus, creating SQL to interact with translations is very straightforward:
 
-`SELECT id, title_en AS title FROM book WHERE title = 'The Alchemist';`
+`SELECT id, title_en AS title FROM book WHERE title_en = 'The Alchemist';`
 
-### 3. Easy translation to all languages
+This may not be a notable difference when you prototype your application, but becomes more important when you move away from ActiveRecord and write queries using QueryBuilder, pure SQL, or in a barebone PHP/C layer/app side by side with your Yii application (for performance reasons).
 
-After you have generated your CRUD for the multilingual model, you immediately have a translation interface for all languages. You can translate them side by side and easily spot missing translations.
+### 2. Compatibility with Gii
 
-### 4. Translation of related records while maintaining foreign keys
+Your multilingual models will keep working as ordinary models, albeit with more fields than before. You can generate new CRUD and instantly have a translation interface for all your languages.
 
-Do you have a image_id foreign key that should be point to a different image record for each language? Good news, you can still define your relations / foreign keys and keep database integrity checks intact (much harder when using lookup tables)
+### 3. Matter of taste scalability-wise
 
-### 5. Decreased complexity = Flexibility
+Let's pone that we have 40 languages and 300.000 *book* records with 8 translatable fields each, as well as 2 million *chapter* records, with 4 translatable fields each.
 
-Several advantages, such as:
+#### What do you prefer?
 
-- Create SQL commands for all translations without requiring n joins where n is the amount of languages configured
-- Easily add whole tables to Lucene indexes and be certain that all translated content is indexed
+##### A. Suffixed columns
 
-### 6. Why not?
+    Table book with 320 columns and 300.000 records
+    Table chapter with 160 columns and 2 million records
 
-Why not? :)
+##### B. One translation table for book and one for chapter
+
+    Table book with 8 columns and 300.000 records
+    Table chapter with 4 columns and 2 million records
+    Table book_translation with 3 columns and 96 million records
+    Table chapter_translation with 3 columns and 320 million records
+
+##### C. One translation table for all records:
+
+    Table book with 8 columns and 300.000 records
+    Table chapter with 4 columns and 2 million records
+    Table translation with 3 columns and 416 million records
+
+### 4. Decreased complexity = Flexibility
+
+Say you have a query that without translated fields requires 7 joins, a group by clause and 1-2 subqueries. Then add the necessity to add one more join for each translated field and still achieve a high-performant query. It certainly is possible, but with the cost of added complexity.
+
+In essence, the concept of having suffixed columns instead of translation table(s) is similar to the concept of code generation. You add extra complexity to generate the code/datamodel and receive the benefit of a code base that is easier to maintain and customize.
+
+### 5. Why not?
+
+Yeah, why not? We'd love to hear your views, open an issue and start debating! :)
 
 Running tests
 ==========
