@@ -61,4 +61,24 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
 		return in_array($name, $this->translationAttributes) ? true : parent::canSetProperty($name);
 	}
 
+	/**
+	 * Mark the multilingual attributes as safe, so that forms that rely
+	 * on setting attributes from post values works without modification.
+	 * 
+	 * @param CActiveRecord $owner
+	 * @throws Exception
+	 */
+	public function attach($owner)
+	{
+		parent::attach($owner);
+		if (!($owner instanceof CActiveRecord))
+			throw new Exception('Owner must be a CActiveRecord class');
+
+		$validators = $owner->getValidatorList();
+
+		foreach ($this->translationAttributes as $name) {
+			$validators->add(CValidator::createValidator('safe', $owner, $name, array()));
+		}
+	}
+
 }
