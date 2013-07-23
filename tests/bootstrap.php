@@ -17,26 +17,27 @@ define('APP_ASSETS', realpath(APP_ROOT . '/assets'));
 // Instantiated the test app
 require_once(__DIR__ . '/fakes/MinimalApplication.php');
 Yii::createApplication(
-	'MinimalApplication', array(
-	'aliases' => array(
-		'tests' => APP_ROOT,
-		'i18n-columns' => APP_ROOT . '/..',
-	),
-	'import' => array(
-		'i18n-columns.behaviors.I18nColumnsBehavior',
-	),
-	'language' => 'en',
-	'basePath' => APP_ROOT,
-	'runtimePath' => APP_RUNTIME,
-	'components' => array(
-		'db' => array(
-			'connectionString' => 'sqlite:' . APP_ROOT . '/db/test.db',
-		),
-		'assetManager' => array(
-			'basePath' => APP_ASSETS // do not forget to clean this folder sometimes
-		)
-	)
-	)
+    'MinimalApplication',
+    array(
+        'aliases' => array(
+            'tests' => APP_ROOT,
+            'i18n-columns' => APP_ROOT . '/..',
+        ),
+        'import' => array(
+            'i18n-columns.behaviors.I18nColumnsBehavior',
+        ),
+        'language' => 'en',
+        'basePath' => APP_ROOT,
+        'runtimePath' => APP_RUNTIME,
+        'components' => array(
+            'db' => array(
+                'connectionString' => 'sqlite:' . APP_ROOT . '/db/test.db',
+            ),
+            'assetManager' => array(
+                'basePath' => APP_ASSETS // do not forget to clean this folder sometimes
+            )
+        )
+    )
 );
 
 // See the `Boostrap.init()` method for explanation why it is needed

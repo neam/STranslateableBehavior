@@ -6,8 +6,9 @@
  *
  * @property Bootstrap bootstrap
  */
-class MinimalApplication extends CWebApplication {
+class MinimalApplication extends CWebApplication
+{
 
-	// Nothing here yet
+    // Nothing here yet
 
 }
