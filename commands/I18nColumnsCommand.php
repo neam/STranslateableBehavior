@@ -145,7 +145,7 @@ class I18nColumnsCommand extends CConsoleCommand
 
                 }
 
-                // Rename columns back and forth
+                // Rename columns back and forth for the source language column (avoiding data loss compared to dropping and creating a new column instead)
                 if ($lang == $this->sourceLanguage) {
                     // Remove fks before rename
                     if (!is_null($attributeFk)) {
