@@ -168,6 +168,12 @@ All translations will be available through attribute suffix, ie `$book->title_en
 Changelog
 ---------
 
+### 0.2.0
+
+- Supporting multilingual foreign keys
+- Incremental addition of new i18n columns as more languages are added
+- Source code is formatted according to the PSR2 standard
+
 ### 0.1.0
 
 - Renamed to I18nColumns (to clarify the underlying concept)
