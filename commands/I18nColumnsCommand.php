@@ -97,9 +97,9 @@ class I18nColumnsCommand extends CConsoleCommand
     {
         $this->d("Creating the migration...\n");
         foreach ($this->models as $modelName => $modelClass) {
-            $this->d("\t...$modelName: ");
+            $this->d("\t...$modelName: \n");
             foreach ($this->languages as $lang) {
-                $this->d($lang . ",");
+                $this->d("\t\t$lang: \n");
                 $this->_processLang($lang, $modelClass);
             }
             $this->d("\n");
@@ -129,6 +129,8 @@ class I18nColumnsCommand extends CConsoleCommand
             } else {
                 throw new CException("No source attribute was found (neither $translationAttribute nor $sourceLanguageAttribute found in {$model->tableName()})");
             }
+
+            $this->d("\t\t\t$newName ($attribute)\n");
 
             if (!isset($model->metaData->columns[$newName])) {
 
