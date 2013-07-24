@@ -115,9 +115,22 @@ class I18nColumnsCommand extends CConsoleCommand
     private function _processLang($lang, $model)
     {
         $behaviors = $model->behaviors();
-        foreach ($behaviors['i18n-columns']['translationAttributes'] as $attribute) {
-            $newName = $attribute . '_' . $lang;
-            if (!isset($model->metaData->columns[$newName]) && $this->_checkColumnExists($model, $attribute)) {
+        foreach ($behaviors['i18n-columns']['translationAttributes'] as $translationAttribute) {
+
+            $newName = $translationAttribute . '_' . $lang;
+            $sourceLanguageAttribute = $translationAttribute . '_' . $this->sourceLanguage;
+
+            // Determine source column
+            $attribute = null;
+            if ($this->_checkColumnExists($model, $translationAttribute)) {
+                $attribute = $translationAttribute;
+            } elseif ($this->_checkColumnExists($model, $sourceLanguageAttribute)) {
+                $attribute = $sourceLanguageAttribute;
+            } else {
+                throw new CException("No source attribute was found (neither $translationAttribute nor $sourceLanguageAttribute found in {$model->tableName()})");
+            }
+
+            if (!isset($model->metaData->columns[$newName])) {
 
                 // Foreign key checks
                 $attributeFk = null;
@@ -146,7 +159,7 @@ class I18nColumnsCommand extends CConsoleCommand
                 }
 
                 // Rename columns back and forth for the source language column (avoiding data loss compared to dropping and creating a new column instead)
-                if ($lang == $this->sourceLanguage) {
+                if ($lang == $this->sourceLanguage && $attribute != $sourceLanguageAttribute) {
                     // Remove fks before rename
                     if (!is_null($attributeFk)) {
                         $this->up[] = $this->down[] = '$this->dropForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
