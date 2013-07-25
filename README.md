@@ -17,6 +17,7 @@ Requirements
  * Yii 1.1 or above
  * Use of Yii console
  * Use of Gii (preferably [Gtc](https://github.com/schmunk42/gii-template-collection/))
+ * MySQL 5.1.10+, SQL Server 2012 or similarly recent database (For the console command. The behavior itself works with any Yii-supported database)
 
 Setup
 -----
