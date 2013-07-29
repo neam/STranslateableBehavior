@@ -299,7 +299,7 @@ class ' . $migrationName . ' extends CDbMigration
         print "To apply migration enter: ./yiic migrate\n";
     }
 
-    // Originally from gii-template-collection / fullCrud / FullCrudGenerator.php
+    // Adapted from gii-template-collection / fullCrud / FullCrudCode.php
     private function _getModels()
     {
         $models = array();
@@ -347,7 +347,7 @@ class ' . $migrationName . ' extends CDbMigration
         return $models;
     }
 
-    // Imported from gii-template-collection / fullCrud / FullCrudGenerator.php
+    // Imported from gii-template-collection / fullCrud / FullCrudCode.php
     private function _checkFile($file, $alias = '')
     {
         if (substr($file, 0, 1) !== '.' && substr($file, 0, 2) !== '..' && substr(
