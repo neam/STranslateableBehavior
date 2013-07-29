@@ -1,20 +1,38 @@
+
+
+CREATE TABLE `image` (
+  `id` BIGINT(20) NOT NULL ,
+  `path` VARCHAR(255) NULL DEFAULT NULL ,
+  `created` DATETIME NULL DEFAULT NULL ,
+  `modified` DATETIME NULL DEFAULT NULL ,
+  PRIMARY KEY (`id`) );
+
+
 CREATE TABLE `book` (
-  `id` bigint(20) NOT NULL,
-  `title_en` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `slug_en` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `created` datetime DEFAULT NULL,
-  `modified` datetime DEFAULT NULL,
-  `slug_es` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `title_es` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `slug_fa` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `title_fa` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `slug_hi` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `title_hi` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `slug_pt` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `title_pt` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `slug_sv` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `title_sv` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `slug_de` varchar(255) COLLATE BINARY DEFAULT NULL,
-  `title_de` varchar(255) COLLATE BINARY DEFAULT NULL,
-  PRIMARY KEY (`id`)
-);
+  `id` BIGINT(20) NOT NULL ,
+  `title` VARCHAR(255) NULL DEFAULT NULL ,
+  `slug` VARCHAR(255) NULL DEFAULT NULL ,
+  `image_id` BIGINT(20) NOT NULL ,
+  `created` DATETIME NULL DEFAULT NULL ,
+  `modified` DATETIME NULL DEFAULT NULL ,
+  PRIMARY KEY (`id`) ,
+  CONSTRAINT `fk_book_image1`
+    FOREIGN KEY (`image_id` )
+    REFERENCES `image` (`id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+
+CREATE TABLE `chapter` (
+  `id` BIGINT(20) NOT NULL ,
+  `title` VARCHAR(255) NULL DEFAULT NULL ,
+  `slug` VARCHAR(255) NULL DEFAULT NULL ,
+  `book_id` BIGINT(20) NOT NULL ,
+  `created` DATETIME NULL DEFAULT NULL ,
+  `modified` DATETIME NULL DEFAULT NULL ,
+  PRIMARY KEY (`id`) ,
+  CONSTRAINT `fk_chapter_book`
+    FOREIGN KEY (`book_id` )
+    REFERENCES `book` (`id` )
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
