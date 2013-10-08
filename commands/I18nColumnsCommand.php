@@ -9,8 +9,13 @@
  * @license MIT
  * @author See https://github.com/neam/yii-i18n-columns/graphs/contributors
  */
+
 class I18nColumnsCommand extends CConsoleCommand
 {
+    /**
+     * @var string
+     */
+    public $migrationPath='application.migrations';
 
     /**
      * @var array
@@ -93,7 +98,7 @@ class I18nColumnsCommand extends CConsoleCommand
     /**
      * Create the migration files
      */
-    private function _createMigration()
+    protected function _createMigration()
     {
         $this->d("Creating the migration...\n");
         foreach ($this->models as $modelName => $modelClass) {
@@ -112,7 +117,7 @@ class I18nColumnsCommand extends CConsoleCommand
      * @param $lang
      * @param $model
      */
-    private function _processLang($lang, $model)
+    protected function _processLang($lang, $model)
     {
         $behaviors = $model->behaviors();
         foreach ($behaviors['i18n-columns']['translationAttributes'] as $translationAttribute) {
@@ -217,7 +222,7 @@ class I18nColumnsCommand extends CConsoleCommand
      * @param $column
      * @return bool
      */
-    private function _checkColumnExists($model, $column)
+    protected function _checkColumnExists($model, $column)
     {
         return isset($model->metaData->columns[$column]);
     }
@@ -227,7 +232,7 @@ class I18nColumnsCommand extends CConsoleCommand
      * @param $column
      * @return string
      */
-    private function _getColumnDbType($model, $column)
+    protected function _getColumnDbType($model, $column)
     {
         $data = $model->metaData->columns[$column];
         $isNull = $data->allowNull ? "null" : "not null";
@@ -240,7 +245,7 @@ class I18nColumnsCommand extends CConsoleCommand
      *
      * @access protected
      */
-    private function _loadLanguages()
+    protected function _loadLanguages()
     {
         // Load main.php config file
         $file = realpath(Yii::app()->basePath) . '/config/main.php';
@@ -267,7 +272,7 @@ class I18nColumnsCommand extends CConsoleCommand
     /**
      * Create migration file
      */
-    private function _createMigrationFile()
+    protected function _createMigrationFile()
     {
         if (count($this->up) == 0) {
             exit("Database up to date\n");
@@ -289,7 +294,7 @@ class ' . $migrationName . ' extends CDbMigration
     }
 }' . "\n";
 
-        $migrationsDir = realpath(Yii::app()->basePath . '/migrations');
+        $migrationsDir = Yii::getPathOfAlias($this->migrationPath);
         if (!realpath($migrationsDir)) {
             die(sprintf('Please create migration directory %s first', $migrationsDir));
         }
@@ -305,7 +310,7 @@ class ' . $migrationName . ' extends CDbMigration
     }
 
     // Adapted from gii-template-collection / fullCrud / FullCrudCode.php
-    private function _getModels()
+    protected function _getModels()
     {
         $models = array();
         $aliases = array();
@@ -353,7 +358,7 @@ class ' . $migrationName . ' extends CDbMigration
     }
 
     // Imported from gii-template-collection / fullCrud / FullCrudCode.php
-    private function _checkFile($file, $alias = '')
+    protected function _checkFile($file, $alias = '')
     {
         if (substr($file, 0, 1) !== '.' && substr($file, 0, 2) !== '..' && substr(
                 $file,
