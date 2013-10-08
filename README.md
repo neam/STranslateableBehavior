@@ -81,11 +81,17 @@ If you don't use composer, clone or download this project into /path/to/your/app
         return array(
             'i18n-columns' => array(
                  'class' => 'I18nColumnsBehavior',
+                 /* The multilingual attributes */
                  'translationAttributes' => array(
                       'title',
                       'slug',
+                      'image_id',
                       'etc',
                  ),
+                /* Specify multilingual belongsTo relations in the form 'RelatedModel' => array('relationName' => 'foreignKey') */
+                'multilingualRelations' => array(
+                    'Image' => array('image' => 'image_id'),
+                ),
             ),
         );
     }
@@ -168,6 +174,10 @@ All translations will be available through attribute suffix, ie `$book->title_en
 
 Changelog
 ---------
+
+### 0.2.1
+
+- Virtual access to multilingual foreign keys (ie $model->relationName is mapped to $model->relationNameId{Lang})
 
 ### 0.2.0
 
