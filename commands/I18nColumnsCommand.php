@@ -86,7 +86,7 @@ class I18nColumnsCommand extends CConsoleCommand
         if (sizeof($this->models) > 0) {
             $this->_createMigration();
         } else {
-            echo "Found no models with a i18nColumns() method";
+            throw new CException("Found no models with i18nColumns behavior attached");
         }
     }
 
