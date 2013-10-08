@@ -175,11 +175,12 @@ All translations will be available through attribute suffix, ie `$book->title_en
 Changelog
 ---------
 
-### 0.2.1
+### 0.3.0-alpha (development release)
 
 - Virtual access to multilingual foreign keys (ie $model->relationName is mapped to $model->relationNameId{Lang})
+- Some bug fixes
 
-### 0.2.0
+### 0.2.0 (latest stable)
 
 - Supporting multilingual foreign keys
 - Incremental addition of new i18n columns as more languages are added
