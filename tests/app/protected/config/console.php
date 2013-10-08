@@ -9,11 +9,25 @@ return array(
 	// preloading 'log' component
 	'preload'=>array('log'),
 
+    // i18n-columns
+    'aliases' => array(
+        'i18n-columns' => dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..',
+    ),
+    'import' => array(
+        'i18n-columns.behaviors.I18nColumnsBehavior',
+    ),
+    'language' => 'en',
+    'commandMap' => array(
+        'i18n-columns'    => array(
+            'class' => 'i18n-columns.commands.I18nColumnsCommand',
+        ),
+    ),
+
 	// application components
 	'components'=>array(
-		'db'=>array(
-			'connectionString' => 'sqlite:'.dirname(__FILE__).'/../data/testdrive.db',
-		),
+        'db' => array(
+            'connectionString' => 'sqlite:'.dirname(__FILE__).'/../../../db/test.db',
+        ),
 		// uncomment the following to use a MySQL database
 		/*
 		'db'=>array(

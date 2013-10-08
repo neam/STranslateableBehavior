@@ -12,10 +12,17 @@ return array(
 	// preloading 'log' component
 	'preload'=>array('log'),
 
-	// autoloading model and component classes
+    // i18n-columns
+    'aliases' => array(
+        'i18n-columns' => dirname(__FILE__).DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'..',
+    ),
+    'language' => 'en',
+
+    // autoloading model and component classes
 	'import'=>array(
 		'application.models.*',
 		'application.components.*',
+        'i18n-columns.behaviors.I18nColumnsBehavior',
 	),
 
 	'modules'=>array(
@@ -36,6 +43,17 @@ return array(
 			// enable cookie-based authentication
 			'allowAutoLogin'=>true,
 		),
+        'langHandler'=>array(
+            'languages'=>array(
+                'en',
+                'es',
+                'fa',
+                'hi',
+                'pt',
+                'sv',
+                'de',
+            )
+        ),
 		// uncomment the following to enable URLs in path-format
 		/*
 		'urlManager'=>array(
@@ -48,7 +66,7 @@ return array(
 		),
 		*/
 		'db'=>array(
-			'connectionString' => 'sqlite:'.dirname(__FILE__).'/../data/testdrive.db',
+			'connectionString' => 'sqlite:'.dirname(__FILE__).'/../../../db/test.db',
 		),
 		// uncomment the following to use a MySQL database
 		/*
