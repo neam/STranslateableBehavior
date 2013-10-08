@@ -54,11 +54,13 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
         $translatedAttribute = $name . '_' . Yii::app()->language;
         if (array_key_exists($translatedAttribute, $this->owner->attributes)) {
             $this->owner->$translatedAttribute = $value;
+            return;
         }
 
         $translatedRelation = $this->generateRelationName($this->multilingualRelations[$name] . '_' . Yii::app()->language);
         if (array_key_exists($translatedRelation, $this->owner->attributes)) {
             $this->owner->$translatedRelation = $value;
+            return;
         }
 
     }
