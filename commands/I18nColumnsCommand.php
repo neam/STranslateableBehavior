@@ -132,6 +132,11 @@ class I18nColumnsCommand extends CConsoleCommand
 
             $this->d("\t\t\t$newName ($attribute)\n");
 
+            // Sqlite check
+            if ((Yii::app()->db->schema instanceof CSqliteSchema) !== false) {
+                throw new CException("Sqlite does not support adding foreign keys, renaming columns or even add new columns that have a NOT NULL constraint, so this command can not support sqlite. Sorry.");
+            }
+
             if (!isset($model->metaData->columns[$newName])) {
 
                 // Foreign key checks
