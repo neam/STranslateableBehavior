@@ -101,13 +101,16 @@ class I18nColumnsCommand extends CConsoleCommand
     protected function _createMigration()
     {
         $this->d("Creating the migration...\n");
-        foreach ($this->models as $modelName => $modelClass) {
+        foreach ($this->models as $modelName => $model) {
             $this->d("\t...$modelName: \n");
-            foreach ($this->languages as $lang) {
-                $this->d("\t\t$lang: \n");
-                $this->_processLang($lang, $modelClass);
+            $behaviors = $model->behaviors();
+            foreach ($behaviors['i18n-columns']['translationAttributes'] as $translationAttribute) {
+                foreach ($this->languages as $lang) {
+                    $this->d("\t\t$lang: ");
+                    $this->_processLang($lang, $model, $translationAttribute);
+                }
+                $this->d("\n");
             }
-            $this->d("\n");
         }
 
         $this->_createMigrationFile();
@@ -117,101 +120,97 @@ class I18nColumnsCommand extends CConsoleCommand
      * @param $lang
      * @param $model
      */
-    protected function _processLang($lang, $model)
+    protected function _processLang($lang, $model, $translationAttribute)
     {
-        $behaviors = $model->behaviors();
-        foreach ($behaviors['i18n-columns']['translationAttributes'] as $translationAttribute) {
+        $newName = $translationAttribute . '_' . $lang;
+        $sourceLanguageAttribute = $translationAttribute . '_' . $this->sourceLanguage;
 
-            $newName = $translationAttribute . '_' . $lang;
-            $sourceLanguageAttribute = $translationAttribute . '_' . $this->sourceLanguage;
+        // Determine source column
+        $attribute = null;
+        if ($this->_checkColumnExists($model, $translationAttribute)) {
+            $attribute = $translationAttribute;
+        } elseif ($this->_checkColumnExists($model, $sourceLanguageAttribute)) {
+            $attribute = $sourceLanguageAttribute;
+        } else {
+            throw new CException("No source attribute was found (neither $translationAttribute nor $sourceLanguageAttribute found in {$model->tableName()})");
+        }
 
-            // Determine source column
-            $attribute = null;
-            if ($this->_checkColumnExists($model, $translationAttribute)) {
-                $attribute = $translationAttribute;
-            } elseif ($this->_checkColumnExists($model, $sourceLanguageAttribute)) {
-                $attribute = $sourceLanguageAttribute;
-            } else {
-                throw new CException("No source attribute was found (neither $translationAttribute nor $sourceLanguageAttribute found in {$model->tableName()})");
+        $this->d("\t$newName ($attribute)\n");
+
+        // Sqlite check
+        if ((Yii::app()->db->schema instanceof CSqliteSchema) !== false) {
+            throw new CException("Sqlite does not support adding foreign keys, renaming columns or even add new columns that have a NOT NULL constraint, so this command can not support sqlite. Sorry.");
+        }
+
+        if (!isset($model->metaData->columns[$newName])) {
+
+            // Foreign key checks
+            $attributeFk = null;
+            if (isset($model->metaData->tableSchema->foreignKeys[$attribute])) {
+
+                $attributeFk = Yii::app()->db->createCommand(
+                    "SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = :table_name AND COLUMN_NAME = :column_name"
+                )->queryRow(
+                        true,
+                        array(
+                            ':table_name' => $model->tableName(),
+                            ':column_name' => $attribute,
+                        )
+                    );
+
+                $attributeFk["rules"] = Yii::app()->db->createCommand(
+                    "SELECT UPDATE_RULE, DELETE_RULE FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS WHERE TABLE_NAME = :table_name AND CONSTRAINT_NAME = :constraint_name"
+                )->queryRow(
+                        true,
+                        array(
+                            ':table_name' => $model->tableName(),
+                            ':constraint_name' => $attributeFk["CONSTRAINT_NAME"],
+                        )
+                    );
+
             }
 
-            $this->d("\t\t\t$newName ($attribute)\n");
-
-            // Sqlite check
-            if ((Yii::app()->db->schema instanceof CSqliteSchema) !== false) {
-                throw new CException("Sqlite does not support adding foreign keys, renaming columns or even add new columns that have a NOT NULL constraint, so this command can not support sqlite. Sorry.");
-            }
-
-            if (!isset($model->metaData->columns[$newName])) {
-
-                // Foreign key checks
-                $attributeFk = null;
-                if (isset($model->metaData->tableSchema->foreignKeys[$attribute])) {
-
-                    $attributeFk = Yii::app()->db->createCommand(
-                        "SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = :table_name AND COLUMN_NAME = :column_name"
-                    )->queryRow(
-                            true,
-                            array(
-                                ':table_name' => $model->tableName(),
-                                ':column_name' => $attribute,
-                            )
-                        );
-
-                    $attributeFk["rules"] = Yii::app()->db->createCommand(
-                        "SELECT UPDATE_RULE, DELETE_RULE FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS WHERE TABLE_NAME = :table_name AND CONSTRAINT_NAME = :constraint_name"
-                    )->queryRow(
-                            true,
-                            array(
-                                ':table_name' => $model->tableName(),
-                                ':constraint_name' => $attributeFk["CONSTRAINT_NAME"],
-                            )
-                        );
-
+            // Rename columns back and forth for the source language column (avoiding data loss compared to dropping and creating a new column instead)
+            if ($lang == $this->sourceLanguage && $attribute != $sourceLanguageAttribute) {
+                // Remove fks before rename
+                if (!is_null($attributeFk)) {
+                    $this->up[] = $this->down[] = '$this->dropForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
+                        . '\', \'' . $model->tableName() . '\');';
                 }
-
-                // Rename columns back and forth for the source language column (avoiding data loss compared to dropping and creating a new column instead)
-                if ($lang == $this->sourceLanguage && $attribute != $sourceLanguageAttribute) {
-                    // Remove fks before rename
-                    if (!is_null($attributeFk)) {
-                        $this->up[] = $this->down[] = '$this->dropForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
-                            . '\', \'' . $model->tableName() . '\');';
-                    }
-                    $this->up[] = '$this->renameColumn(\'' . $model->tableName() . '\', \'' . $attribute
-                        . '\', \'' . $newName . '\');';
-                    $this->down[] = '$this->renameColumn(\'' . $model->tableName() . '\', \''
-                        . $newName . '\', \'' . $attribute . '\');';
-                    // Add fks again after rename
-                    if (!is_null($attributeFk)) {
-                        $this->up[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
-                            . '\', \'' . $model->tableName()
-                            . '\', \'' . $newName
-                            . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
-                            . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1]
-                            . '\', \'' . $attributeFk["rules"]["DELETE_RULE"]
-                            . '\', \'' . $attributeFk["rules"]["UPDATE_RULE"] . '\');';
-                        $this->down[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
-                            . '\', \'' . $model->tableName()
-                            . '\', \'' . $attribute
-                            . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
-                            . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1]
-                            . '\', \'' . $attributeFk["rules"]["DELETE_RULE"]
-                            . '\', \'' . $attributeFk["rules"]["UPDATE_RULE"] . '\');';
-                    }
-                } else {
-                    $this->up[] = '$this->addColumn(\'' . $model->tableName() . '\', \'' . $newName
-                        . '\', \'' . $this->_getColumnDbType($model, $attribute) . '\');';
-                    $this->down[] = '$this->dropColumn(\'' . $model->tableName() . '\', \''
-                        . $newName . '\');';
-                    // Replicate out-going foreign keys
-                    if (!is_null($attributeFk)) {
-                        $this->up[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"] . '_' . $lang
-                            . '\', \'' . $model->tableName()
-                            . '\', \'' . $newName
-                            . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
-                            . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1] . '\');';
-                        // No down-command necessary since the foreign key will be removed when the column is removed
-                    }
+                $this->up[] = '$this->renameColumn(\'' . $model->tableName() . '\', \'' . $attribute
+                    . '\', \'' . $newName . '\');';
+                $this->down[] = '$this->renameColumn(\'' . $model->tableName() . '\', \''
+                    . $newName . '\', \'' . $attribute . '\');';
+                // Add fks again after rename
+                if (!is_null($attributeFk)) {
+                    $this->up[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
+                        . '\', \'' . $model->tableName()
+                        . '\', \'' . $newName
+                        . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
+                        . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1]
+                        . '\', \'' . $attributeFk["rules"]["DELETE_RULE"]
+                        . '\', \'' . $attributeFk["rules"]["UPDATE_RULE"] . '\');';
+                    $this->down[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
+                        . '\', \'' . $model->tableName()
+                        . '\', \'' . $attribute
+                        . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
+                        . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1]
+                        . '\', \'' . $attributeFk["rules"]["DELETE_RULE"]
+                        . '\', \'' . $attributeFk["rules"]["UPDATE_RULE"] . '\');';
+                }
+            } else {
+                $this->up[] = '$this->addColumn(\'' . $model->tableName() . '\', \'' . $newName
+                    . '\', \'' . $this->_getColumnDbType($model, $attribute) . '\');';
+                $this->down[] = '$this->dropColumn(\'' . $model->tableName() . '\', \''
+                    . $newName . '\');';
+                // Replicate out-going foreign keys
+                if (!is_null($attributeFk)) {
+                    $this->up[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"] . '_' . $lang
+                        . '\', \'' . $model->tableName()
+                        . '\', \'' . $newName
+                        . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
+                        . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1] . '\');';
+                    // No down-command necessary since the foreign key will be removed when the column is removed
                 }
             }
         }
