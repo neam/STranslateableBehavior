@@ -201,8 +201,6 @@ class I18nColumnsCommand extends CConsoleCommand
             } else {
                 $this->up[] = '$this->addColumn(\'' . $model->tableName() . '\', \'' . $newName
                     . '\', \'' . $this->_getColumnDbType($model, $attribute) . '\');';
-                $this->down[] = '$this->dropColumn(\'' . $model->tableName() . '\', \''
-                    . $newName . '\');';
                 // Replicate out-going foreign keys
                 if (!is_null($attributeFk)) {
                     $this->up[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"] . '_' . $lang
@@ -210,8 +208,11 @@ class I18nColumnsCommand extends CConsoleCommand
                         . '\', \'' . $newName
                         . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
                         . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1] . '\');';
-                    // No down-command necessary since the foreign key will be removed when the column is removed
+                    $this->down[] = '$this->dropForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"] . '_' . $lang
+                        . '\', \'' . $model->tableName() . '\');';
                 }
+                $this->down[] = '$this->dropColumn(\'' . $model->tableName() . '\', \''
+                    . $newName . '\');';
             }
         }
     }
