@@ -1,7 +1,7 @@
 Yii Extension: I18nColumns
 ==========================
 
-Transparent attribute translation for ActiveRecords, without requiring lookup tables for translated field contents.
+Transparent language/locale-dependent attributes and relations for ActiveRecords, without using lookup tables for translated field contents.
 
 Features
 --------
@@ -10,6 +10,8 @@ Features
  * Automatically loads the application language by default
  * Translations are stored directly in the model using separate columns for each language
  * Console command automatically creates migrations for the necessary database changes
+ * Leverages Gii code generation to provide CRUD for translation work
+ * Not only translations - any attribute or relation that is dependent on language or locale can be managed with this extension
 
 Requirements
 ------------------
@@ -98,11 +100,11 @@ If you don't use composer, clone or download this project into /path/to/your/app
 
 #### 2. Create migration from command line:
 
-`./yiic i18n-columns`
+`./yiic i18n-columns add`
 
 Prior to this, you should already have configured a default language (`$config['language']`) and available languages (`$config['components']['langHandler']['languages']`) for your app.
 
-Run with `--verbose` to see more details.
+Run with `--verbose` to see more detailed output.
 
 #### 3. Apply the generated migration:
 
@@ -175,9 +177,14 @@ All translations will be available through attribute suffix, ie `$book->title_en
 Changelog
 ---------
 
+### 0.3.0-alpha2 (development release)
+
+- Command action to remove columns, related to an unused language, from the schema
+
 ### 0.3.0-alpha (development release)
 
 - Virtual access to multilingual foreign keys (ie $model->relationName is mapped to $model->relationNameId{Lang})
+- Command action to remove columns, related to an unused language, from the schema
 - Some bug fixes
 
 ### 0.2.0 (latest stable)
