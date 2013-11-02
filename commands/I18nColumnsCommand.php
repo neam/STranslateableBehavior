@@ -126,7 +126,7 @@ class I18nColumnsCommand extends CConsoleCommand
      */
     protected function _processAttribute($lang, $model, $translationAttribute)
     {
-        $newName = $translationAttribute . '_' . $lang;
+        $i18nName = $translationAttribute . '_' . $lang;
         $sourceLanguageAttribute = $translationAttribute . '_' . $this->sourceLanguage;
 
         // Determine source column
@@ -139,9 +139,9 @@ class I18nColumnsCommand extends CConsoleCommand
             throw new CException("No source attribute was found (neither $translationAttribute nor $sourceLanguageAttribute found in {$model->tableName()})");
         }
 
-        $this->d("\t$newName ($attribute)\n");
+        $this->d("\t$i18nName ($attribute)\n");
 
-        if (!isset($model->metaData->columns[$newName])) {
+        if (!isset($model->metaData->columns[$i18nName])) {
 
             // Foreign key checks
             $attributeFk = $this->attributeFk($model, $attribute);
@@ -154,14 +154,14 @@ class I18nColumnsCommand extends CConsoleCommand
                         . '\', \'' . $model->tableName() . '\');';
                 }
                 $this->up[] = '$this->renameColumn(\'' . $model->tableName() . '\', \'' . $attribute
-                    . '\', \'' . $newName . '\');';
+                    . '\', \'' . $i18nName . '\');';
                 $this->down[] = '$this->renameColumn(\'' . $model->tableName() . '\', \''
-                    . $newName . '\', \'' . $attribute . '\');';
+                    . $i18nName . '\', \'' . $attribute . '\');';
                 // Add fks again after rename
                 if (!is_null($attributeFk)) {
                     $this->up[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
                         . '\', \'' . $model->tableName()
-                        . '\', \'' . $newName
+                        . '\', \'' . $i18nName
                         . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
                         . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1]
                         . '\', \'' . $attributeFk["rules"]["DELETE_RULE"]
@@ -175,20 +175,20 @@ class I18nColumnsCommand extends CConsoleCommand
                         . '\', \'' . $attributeFk["rules"]["UPDATE_RULE"] . '\');';
                 }
             } else {
-                $this->up[] = '$this->addColumn(\'' . $model->tableName() . '\', \'' . $newName
+                $this->up[] = '$this->addColumn(\'' . $model->tableName() . '\', \'' . $i18nName
                     . '\', \'' . $this->_getColumnDbType($model, $attribute) . '\');';
                 // Replicate out-going foreign keys
                 if (!is_null($attributeFk)) {
                     $this->up[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"] . '_' . $lang
                         . '\', \'' . $model->tableName()
-                        . '\', \'' . $newName
+                        . '\', \'' . $i18nName
                         . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][0]
                         . '\', \'' . $model->metaData->tableSchema->foreignKeys[$attribute][1] . '\');';
                     $this->down[] = '$this->dropForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"] . '_' . $lang
                         . '\', \'' . $model->tableName() . '\');';
                 }
                 $this->down[] = '$this->dropColumn(\'' . $model->tableName() . '\', \''
-                    . $newName . '\');';
+                    . $i18nName . '\');';
             }
         }
     }
