@@ -194,6 +194,67 @@ class I18nColumnsCommand extends CConsoleCommand
     }
 
     /**
+     *
+     * @param $langcode
+     */
+    public function actionRemoveUnusedLanguage($lang, $verbose = false)
+    {
+        $this->_verbose = $verbose;
+        $this->load();
+
+        if ($lang == $this->sourceLanguage) {
+            throw new CException("The source language cannot be removed");
+        }
+
+        $this->d("Creating the migration...\n");
+        foreach ($this->models as $modelName => $model) {
+            $this->d("\t...$modelName: \n");
+            $behaviors = $model->behaviors();
+            foreach ($behaviors['i18n-columns']['translationAttributes'] as $attribute) {
+                $this->d("\t\t$lang: ");
+                $this->_removeUnusedLanguageAttribute($lang, $model, $attribute);
+                $this->d("\n");
+            }
+        }
+
+        $this->_createMigrationFile();
+
+    }
+
+    /**
+     * @param $lang
+     * @param $model
+     */
+    protected function _removeUnusedLanguageAttribute($lang, $model, $attribute)
+    {
+        $i18nName = $attribute . '_' . $lang;
+
+        $this->d("\t$i18nName ($attribute)\n");
+
+        if (isset($model->metaData->columns[$i18nName])) {
+
+            // Foreign key checks
+            $attributeFk = $this->attributeFk($model, $i18nName);
+
+            $this->down[] = '$this->addColumn(\'' . $model->tableName() . '\', \'' . $i18nName
+                . '\', \'' . $this->_getColumnDbType($model, $i18nName) . '\');';
+            // Replicate out-going foreign keys
+            if (!is_null($attributeFk)) {
+                $this->down[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
+                    . '\', \'' . $model->tableName()
+                    . '\', \'' . $i18nName
+                    . '\', \'' . $model->metaData->tableSchema->foreignKeys[$i18nName][0]
+                    . '\', \'' . $model->metaData->tableSchema->foreignKeys[$i18nName][1] . '\');';
+                $this->up[] = '$this->dropForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
+                    . '\', \'' . $model->tableName() . '\');';
+            }
+            $this->up[] = '$this->dropColumn(\'' . $model->tableName() . '\', \''
+                . $i18nName . '\');';
+
+        }
+    }
+
+    /**
      * @param $model
      * @param $column
      * @return bool
