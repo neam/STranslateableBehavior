@@ -15,7 +15,7 @@ class I18nColumnsCommand extends CConsoleCommand
     /**
      * @var string
      */
-    public $migrationPath='application.migrations';
+    public $migrationPath = 'application.migrations';
 
     /**
      * @var array
