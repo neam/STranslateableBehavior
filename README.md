@@ -100,7 +100,7 @@ If you don't use composer, clone or download this project into /path/to/your/app
 
 #### 2. Create migration from command line:
 
-`./yiic i18n-columns add`
+`./yiic i18n-columns process`
 
 Prior to this, you should already have configured a default language (`$config['language']`) and available languages (`$config['components']['langHandler']['languages']`) for your app.
 

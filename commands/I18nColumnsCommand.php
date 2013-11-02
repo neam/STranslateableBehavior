@@ -76,10 +76,12 @@ class I18nColumnsCommand extends CConsoleCommand
      * @param array $args
      * @return bool|int
      */
-    public function run($args)
+    private function load()
     {
-        if (in_array('--verbose', $args)) {
-            $this->_verbose = true;
+
+        // Sqlite check
+        if ((Yii::app()->db->schema instanceof CSqliteSchema) !== false) {
+            throw new CException("Sqlite does not support adding foreign keys, renaming columns or even add new columns that have a NOT NULL constraint, so this command can not support sqlite. Sorry.");
         }
 
         //
@@ -88,26 +90,28 @@ class I18nColumnsCommand extends CConsoleCommand
 
         $this->models = $this->_getModels();
 
-        if (sizeof($this->models) > 0) {
-            $this->_createMigration();
-        } else {
+        if (sizeof($this->models) == 0) {
             throw new CException("Found no models with i18nColumns behavior attached");
         }
     }
 
     /**
-     * Create the migration files
+     * This will rename the fields that are defined in translationAttributes to fieldname_defaultlanguagecode and add columns for the remaining languages.
+     * @param $langcode
      */
-    protected function _createMigration()
+    public function actionProcess($verbose = false)
     {
+        $this->_verbose = $verbose;
+        $this->load();
+
         $this->d("Creating the migration...\n");
         foreach ($this->models as $modelName => $model) {
             $this->d("\t...$modelName: \n");
             $behaviors = $model->behaviors();
-            foreach ($behaviors['i18n-columns']['translationAttributes'] as $translationAttribute) {
+            foreach ($behaviors['i18n-columns']['translationAttributes'] as $attribute) {
                 foreach ($this->languages as $lang) {
                     $this->d("\t\t$lang: ");
-                    $this->_processLang($lang, $model, $translationAttribute);
+                    $this->_processAttribute($lang, $model, $attribute);
                 }
                 $this->d("\n");
             }
@@ -120,7 +124,7 @@ class I18nColumnsCommand extends CConsoleCommand
      * @param $lang
      * @param $model
      */
-    protected function _processLang($lang, $model, $translationAttribute)
+    protected function _processAttribute($lang, $model, $translationAttribute)
     {
         $newName = $translationAttribute . '_' . $lang;
         $sourceLanguageAttribute = $translationAttribute . '_' . $this->sourceLanguage;
@@ -137,38 +141,10 @@ class I18nColumnsCommand extends CConsoleCommand
 
         $this->d("\t$newName ($attribute)\n");
 
-        // Sqlite check
-        if ((Yii::app()->db->schema instanceof CSqliteSchema) !== false) {
-            throw new CException("Sqlite does not support adding foreign keys, renaming columns or even add new columns that have a NOT NULL constraint, so this command can not support sqlite. Sorry.");
-        }
-
         if (!isset($model->metaData->columns[$newName])) {
 
             // Foreign key checks
-            $attributeFk = null;
-            if (isset($model->metaData->tableSchema->foreignKeys[$attribute])) {
-
-                $attributeFk = Yii::app()->db->createCommand(
-                    "SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = :table_name AND COLUMN_NAME = :column_name"
-                )->queryRow(
-                        true,
-                        array(
-                            ':table_name' => $model->tableName(),
-                            ':column_name' => $attribute,
-                        )
-                    );
-
-                $attributeFk["rules"] = Yii::app()->db->createCommand(
-                    "SELECT UPDATE_RULE, DELETE_RULE FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS WHERE TABLE_NAME = :table_name AND CONSTRAINT_NAME = :constraint_name"
-                )->queryRow(
-                        true,
-                        array(
-                            ':table_name' => $model->tableName(),
-                            ':constraint_name' => $attributeFk["CONSTRAINT_NAME"],
-                        )
-                    );
-
-            }
+            $attributeFk = $this->attributeFk($model, $attribute);
 
             // Rename columns back and forth for the source language column (avoiding data loss compared to dropping and creating a new column instead)
             if ($lang == $this->sourceLanguage && $attribute != $sourceLanguageAttribute) {
@@ -238,6 +214,35 @@ class I18nColumnsCommand extends CConsoleCommand
         $isNull = $data->allowNull ? "null" : "not null";
 
         return $data->dbType . ' ' . $isNull;
+    }
+
+    protected function attributeFk($model, $attribute)
+    {
+        $attributeFk = null;
+        if (isset($model->metaData->tableSchema->foreignKeys[$attribute])) {
+
+            $attributeFk = Yii::app()->db->createCommand(
+                "SELECT TABLE_NAME, COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = :table_name AND COLUMN_NAME = :column_name"
+            )->queryRow(
+                    true,
+                    array(
+                        ':table_name' => $model->tableName(),
+                        ':column_name' => $attribute,
+                    )
+                );
+
+            $attributeFk["rules"] = Yii::app()->db->createCommand(
+                "SELECT UPDATE_RULE, DELETE_RULE FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS WHERE TABLE_NAME = :table_name AND CONSTRAINT_NAME = :constraint_name"
+            )->queryRow(
+                    true,
+                    array(
+                        ':table_name' => $model->tableName(),
+                        ':constraint_name' => $attributeFk["CONSTRAINT_NAME"],
+                    )
+                );
+
+        }
+        return $attributeFk;
     }
 
     /**
