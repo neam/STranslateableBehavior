@@ -206,6 +206,10 @@ class I18nColumnsCommand extends CConsoleCommand
             throw new CException("The source language cannot be removed");
         }
 
+        if (in_array($lang, $this->languages)) {
+            throw new CException("The selected language is currently in use and thus cannot be removed");
+        }
+
         $this->d("Creating the migration...\n");
         foreach ($this->models as $modelName => $model) {
             $this->d("\t...$modelName: \n");
