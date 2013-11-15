@@ -259,6 +259,83 @@ class I18nColumnsCommand extends CConsoleCommand
     }
 
     /**
+     * @param $lang
+     * @param $model
+     */
+    protected function _revertSourceLanguageAttribute($lang, $model, $attribute)
+    {
+        $i18nName = $attribute . '_' . $lang;
+
+        $this->d("\t$i18nName ($attribute)\n");
+
+        if (isset($model->metaData->columns[$i18nName])) {
+
+            // Foreign key checks
+            $attributeFk = $this->attributeFk($model, $i18nName);
+
+            // Remove fks before rename
+            if (!is_null($attributeFk)) {
+                $this->up[] = $this->down[] = '$this->dropForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
+                    . '\', \'' . $model->tableName() . '\');';
+            }
+            $this->down[] = '$this->renameColumn(\'' . $model->tableName() . '\', \'' . $attribute
+                . '\', \'' . $i18nName . '\');';
+            $this->up[] = '$this->renameColumn(\'' . $model->tableName() . '\', \''
+                . $i18nName . '\', \'' . $attribute . '\');';
+            // Add fks again after rename
+            if (!is_null($attributeFk)) {
+                $this->down[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
+                    . '\', \'' . $model->tableName()
+                    . '\', \'' . $i18nName
+                    . '\', \'' . $model->metaData->tableSchema->foreignKeys[$i18nName][0]
+                    . '\', \'' . $model->metaData->tableSchema->foreignKeys[$i18nName][1]
+                    . '\', \'' . $attributeFk["rules"]["DELETE_RULE"]
+                    . '\', \'' . $attributeFk["rules"]["UPDATE_RULE"] . '\');';
+                $this->up[] = '$this->addForeignKey(\'' . $attributeFk["CONSTRAINT_NAME"]
+                    . '\', \'' . $model->tableName()
+                    . '\', \'' . $attribute
+                    . '\', \'' . $model->metaData->tableSchema->foreignKeys[$i18nName][0]
+                    . '\', \'' . $model->metaData->tableSchema->foreignKeys[$i18nName][1]
+                    . '\', \'' . $attributeFk["rules"]["DELETE_RULE"]
+                    . '\', \'' . $attributeFk["rules"]["UPDATE_RULE"] . '\');';
+            }
+
+        }
+    }
+
+    /**
+     *
+     * @param $model
+     * @param $attribute
+     */
+    public function actionRemoveUnusedAttribute($modelName, $attribute, $verbose = false)
+    {
+        $this->_verbose = $verbose;
+        $this->load();
+
+        $model = new $modelName();
+
+        $this->d("Creating the migration...\n");
+        $this->d("\t...$modelName: \n");
+        $behaviors = $model->behaviors();
+        foreach ($this->languages as $lang) {
+            $this->d("\t\t$lang: ");
+
+            if ($lang == $this->sourceLanguage) {
+                $this->_revertSourceLanguageAttribute($lang, $model, $attribute);
+            } else {
+                $this->_removeUnusedLanguageAttribute($lang, $model, $attribute);
+            }
+
+            $this->d("\n");
+        }
+
+        $this->_createMigrationFile();
+
+
+    }
+
+    /**
      * @param $model
      * @param $column
      * @return bool
@@ -266,6 +343,18 @@ class I18nColumnsCommand extends CConsoleCommand
     protected function _checkColumnExists($model, $column)
     {
         return isset($model->metaData->columns[$column]);
+    }
+
+    /**
+     * @param $model
+     * @param $column
+     * @return bool
+     */
+    protected function _checkTableAndColumnExists($table, $column)
+    {
+        $tables = Yii::app()->db->schema->getTables();
+        // The column does not exist if the table does not exist
+        return isset($tables[$table]) && (isset($tables[$table]->columns[$column]));
     }
 
     /**
