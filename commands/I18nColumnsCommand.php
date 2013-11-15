@@ -417,11 +417,11 @@ class I18nColumnsCommand extends CConsoleCommand
         }
 
         if (!isset($config['components']['langHandler']['languages'])) {
-            exit("Your Yii application has no configured languages.\n");
+            throw new CException("Your Yii application has no configured languages.\n");
         }
 
         if (!isset($config['language'])) {
-            exit("Please, define a default language in the config file.\n");
+            throw new CException("Please, define a default language in the config file.\n");
         }
 
         $this->languages = $config['components']['langHandler']['languages'];
