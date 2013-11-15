@@ -177,11 +177,11 @@ All translations will be available through attribute suffix, ie `$book->title_en
 Changelog
 ---------
 
-### 0.3.0-alpha2 (development release)
+### 0.3.1 (development release)
 
 - Command action to remove columns, related to an unused language, from the schema
 
-### 0.3.0-alpha (development release)
+### 0.3.0 (development release)
 
 - Virtual access to multilingual foreign keys (ie $model->relationName is mapped to $model->relationNameId{Lang})
 - Command action to remove columns, related to an unused language, from the schema
