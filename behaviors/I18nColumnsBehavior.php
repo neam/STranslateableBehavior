@@ -66,14 +66,15 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
     }
 
     /**
-     * Helper. Returns an array with all columns that this attribute is stored in
+     * Helper. Returns an array with all columns that this attribute is stored in.
+     * Expects Yii app params config to be an array with languages in the format of array('de' => 'Deutsch')
      * @param $attribute
      * @return array
      */
     static public function attributeColumns($attribute)
     {
         $columns = array();
-        foreach (Yii::app()->langHandler->languages as $lang) {
+        foreach (Yii::app()->params["languages"] as $lang => $label) {
             $columns[] = $attribute . "_" . $lang;
         }
         return $columns;
