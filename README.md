@@ -36,13 +36,13 @@ Ensure that you have the following in your composer.json:
         ...
     ],
     "require":{
-        "neam/yii-i18n-columns":"@dev",
+        "neam/yii-i18n-columns":"dev-master",
         ...
     },
 
 Then install through composer:
 
-    php composer.php install neam/yii-i18n-columns
+    php composer.phar update neam/yii-i18n-columns
 
 If you don't use composer, clone or download this project into /path/to/your/app/vendor/neam/yii-i18n-columns
 
