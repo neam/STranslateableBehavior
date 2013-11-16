@@ -3,6 +3,8 @@ Yii Extension: I18nColumns
 
 Transparent language/locale-dependent attributes and relations for ActiveRecords, without using lookup tables for translated field contents.
 
+Ideal when translated attributes are supposed to be native in the active records' database tables, such as translated foreign keys, or multilingual look-up/search columns.
+
 Features
 --------
 
@@ -12,6 +14,11 @@ Features
  * Console command automatically creates migrations for the necessary database changes
  * Leverages Gii code generation to provide CRUD for translation work
  * Not only translations - any attribute or relation that is dependent on language or locale can be managed with this extension
+ * Use when native attributes are desired, such as foreign keys, or to be able to transparently look up and search amongst translated attributes.
+
+Limitations
+-------------
+Use only with a smaller number of attributes/languages or else database restrictions on row size and/or column counts will be exceeded. For the bulk of translated attributes, use [https://github.com/neam/yii-i18n-attribute-messages](https://github.com/neam/yii-i18n-attribute-messages) or [mike's translatable behavior](https://github.com/mikehaertl/translatable).
 
 Requirements
 ------------------
@@ -236,54 +243,24 @@ There is no need to create advanced join-helpers to access the translated attrib
 
 This may not be a notable difference when you prototype your application, but becomes more important when you move away from ActiveRecord and write queries using QueryBuilder, pure SQL, or in a barebone PHP/C layer/app side by side with your Yii application (for performance reasons).
 
-#### 3. Matter of taste scalability-wise
-
-Let's pone that we have 40 languages and 300.000 *book* records with 8 translatable fields each, as well as 2 million *chapter* records, with 4 translatable fields each.
-
-#### What do you prefer?
-
-##### A. Suffixed columns
-
-    Table book with 320 columns and 300.000 records
-    Table chapter with 160 columns and 2 million records
-
-##### B. One translation table for book and one for chapter
-
-    Table book with 8 columns and 300.000 records
-    Table chapter with 4 columns and 2 million records
-    Table book_translation with 3 columns and 96 million records
-    Table chapter_translation with 3 columns and 320 million records
-
-##### C. One translation table for all records:
-
-    Table book with 8 columns and 300.000 records
-    Table chapter with 4 columns and 2 million records
-    Table translation with 3 columns and 416 million records
-
-#### 4. Decreased complexity = Flexibility
+#### 3. Decreased complexity = Flexibility
 
 Say you have a query that without translated fields requires 7 joins, a group by clause and 1-2 subqueries. Then add the necessity to add one more join for each translated field and still achieve a high-performant query. It certainly is possible, but with the cost of added complexity.
 
 In essence, the concept of having suffixed columns instead of translation table(s) is similar to the concept of code generation. You add extra complexity to generate the code/datamodel and receive the benefit of a code base that is easier to maintain and customize.
 
-#### 5. Why not?
+#### 4. Why not?
 
-Despite #1-4 above, this approach does not fit the bill for most projects. It can be seen as anti-quick and too simplistic to be a truly robust solution.
+See "Limitations" above.
 
-For instance, if you actually have as many translations as noted in #3 above, you'd probably be better of with a single translation table stored in a key-value-based NoSQL solution. Then, however, you will no longer be able to join the translated data into SQL-queries directly (for whatever that's worth), and handling translations is probably best done using crowd-sourced platforms than Yii-powered backends.
-
-Also, when the system should be developer independent once shipped, adding languages on-the-fly would need either to be done by adding "all" languages to the datamodel from the beginning (and then merely activating more languages as you go along), or automated with a script similar to (to add the extra columns to the models):
+Also, if the system should be developer independent once shipped, adding languages on-the-fly will need to be automated with a script similar to:
 
     #!/bin/bash
     ./yiic i18n-columns
     ./yiic migrate
-    curl https://.…gii-generate-base-models
+    ./path/to/giic generate application.config.giic.crud
 
-In general, it will not fit larger projects that are aimed at high-performing stable frontends, but will be more suitable when the main priority is to quickly build feature-complete backends for multilingual content, for which the data model changes often. Migrations and CRUD generation is a part of the daily workflow while developing such solutions, and simplicity and easy customization of the generated code often more important than developer independence.
-
-Then again, this extension is written to be as similar as possible to [mike's translatable behavior](https://github.com/mikehaertl/translatable) in usage and configuration, making it easy to later migrate to a translation-table-based approach after initial prototyping.
-
-What other reasons do you have to not use this horizontal approach to multilingual tables? We'd love to hear your views, [open an issue](https://github.com/neam/yii-i18n-columns/issues) and tell us! :)
+In general, it may not fit larger projects that are aimed at simple translated frontends, but will be more suitable when the main priority is to quickly build feature-complete backends for managing and translating multilingual content, possibly for which the data model changes often. Migrations and CRUD generation is a part of the daily workflow while developing such solutions, and simplicity and easy customization of the generated code often more important than developer independence.
 
 Running tests
 -------------
