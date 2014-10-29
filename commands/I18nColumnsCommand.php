@@ -442,7 +442,7 @@ class I18nColumnsCommand extends CConsoleCommand
             exit("Database up to date\n");
         }
 
-        $migrationName = 'm' . gmdate('ymd_His') . '_i18n';
+        $migrationName = 'm' . gmdate('ymd_His') . '_i18n_columns';
 
         $phpCode = '<?php
 class ' . $migrationName . ' extends CDbMigration
