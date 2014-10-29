@@ -405,32 +405,25 @@ class I18nColumnsCommand extends CConsoleCommand
     }
 
     /**
-     * Load languages from main config.
+     * Load languages from app params.
      *
      * @access protected
      */
     protected function _loadLanguages()
     {
-        // Load main.php config file
-        $file = realpath(Yii::app()->basePath) . '/config/main.php';
-        if (!file_exists($file)) {
-            print("Config not found\n");
-            exit("Error loading config file $file.\n");
-        } else {
-            $config = require($file);
-            $this->d("Config loaded\n");
-        }
 
-        if (!isset($config['components']['langHandler']['languages'])) {
+        $params = Yii::app()->params;
+
+        if (!isset($params['languages'])) {
             throw new CException("Your Yii application has no configured languages.\n");
         }
 
-        if (!isset($config['language'])) {
+        if (!isset(Yii::app()->language)) {
             throw new CException("Please, define a default language in the config file.\n");
         }
 
-        $this->languages = $config['components']['langHandler']['languages'];
-        $this->sourceLanguage = $config['language'];
+        $this->languages = array_keys($params['languages']);
+        $this->sourceLanguage = Yii::app()->language;
     }
 
     /**
