@@ -15,12 +15,6 @@
             "email": "firstrow@gmail.com"
         }
     ],
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "http://packages.phundament.com"
-        }
-    ],
     "autoload": {
         "classmap": ["behaviors/"]
     },
