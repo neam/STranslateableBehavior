@@ -25,7 +25,7 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
      */
     public function __get($name)
     {
-        if (!in_array($name, $this->translationAttributes) && !in_array($name, array_keys($this->multilingualRelations))) {
+        if (!in_array($name, $this->translationAttributes, true) && !in_array($name, array_keys($this->multilingualRelations), true)) {
             return parent::__get($name);
         }
 
@@ -100,7 +100,7 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
      */
     public function canGetProperty($name)
     {
-        return in_array($name, $this->translationAttributes) || in_array($name, array_keys($this->multilingualRelations)) ? true : parent::canGetProperty($name);
+        return in_array($name, $this->translationAttributes, true) || in_array($name, array_keys($this->multilingualRelations), true) ? true : parent::canGetProperty($name);
     }
 
     /**
@@ -108,7 +108,7 @@ class I18nColumnsBehavior extends CActiveRecordBehavior
      */
     public function canSetProperty($name)
     {
-        return in_array($name, $this->translationAttributes) || in_array($name, array_keys($this->multilingualRelations)) ? true : parent::canSetProperty($name);
+        return in_array($name, $this->translationAttributes, true) || in_array($name, array_keys($this->multilingualRelations), true) ? true : parent::canSetProperty($name);
     }
 
     /**
